@@ -247,8 +247,9 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 	}
 	
 	newOutput = new float[2 * newArrSize];
-	for (i = 0; i < newArrSize; i++) {
+	for (i = 0; i < newArrSize; i+=2) {
 		newOutput[i] = 0;
+		newOutput[i+1] = 0;
 	}
 	four1((newIR - 1), newArrSize, 1);
 	four1((newInput - 1), newArrSize, 1);
