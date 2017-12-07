@@ -80,7 +80,7 @@ float* wavReader(float *sig, char *inputFile, int *inputSize){
 	sig = new float[wavSize];
 	for (int i = 0; i < wavSize; i++){
 		sam = wavData[i];
-		sig[i] = (sam*1.0) / (pow(2.0, 15.0) -1);
+		sig[i] = (sam*1.0) / (32767);
 		if (sig[i] < -1.0){
 			sig[i] = -1.0;
 		}		
@@ -134,9 +134,11 @@ void four1Scale (float signal[], int N)
 {
 	int i;
 	int j;
-	for (i = 0, j = 0; i < N; i++, j+=2) {
+	for (i = 0, j = 0; i < N; i++, j+=4) {
 		signal[j] /= (float)N;
 		signal[j+1] /= (float)N;
+		signal[j+2] /= (float)N;
+		signal[j+3] /= (float)N;
 	}
 }
 
@@ -214,33 +216,37 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 	float *newOutput = NULL;
 	
 	//Keep doubling array size
+	
 	while (newArrSize < P) {
 		newArrSize *= 2;
 	}
 	
 	
 	newInput = new float[2 * newArrSize];
-	newIR = new float[2 * newArrSize];
-	newOutput = new float[2 * newArrSize];
 	for (i = 0; i < (N * 2); i+=2) {
 		newInput[i] = x[i/2];
 		newInput[i+1] = 0;
 	}
-	
 	while (i < newArrSize){
 		newInput[i] = 0;
-		i++;
-	}
-
+		newInput[i+1] = 0;
+		i+=2;
+	}	
+	
+	
+	
+	newIR = new float[2 * newArrSize];
 	for (i = 0; i < (M * 2); i+=2) {
 		newIR[i] = h[i/2];
 		newIR[i+1] = 0;
 	}
 	while (i < newArrSize){
 		newIR[i] = 0;
-		i++;
+		newIR[i+1] = 0;
+		i+=2;
 	}
 	
+	newOutput = new float[2 * newArrSize];
 	for (i = 0; i < newArrSize; i++) {
 		newOutput[i] = 0;
 	}

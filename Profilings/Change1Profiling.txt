@@ -2,17 +2,15 @@ Flat profile:
 
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
- time   seconds   seconds    calls   s/call   s/call  name    
- 96.83      3.73     3.73        3     1.24     1.24  four1(float*, int, int)
-  1.82      3.80     0.07        1     0.07     3.82  convolve(float*, int, float*, int, float*, int)
-  0.52      3.82     0.02        1     0.02     0.02  four1Scale(float*, int)
-  0.52      3.84     0.02        1     0.02     0.02  scale(float*, int)
-  0.26      3.85     0.01        2     0.01     0.01  wavReader(float*, char*, int*)
-  0.26      3.86     0.01        1     0.01     0.01  wavWriter(float*, int, char*)
-  0.00      3.86     0.00        3     0.00     0.00  std::operator|(std::_Ios_Openmode, std::_Ios_Openmode)
-  0.00      3.86     0.00        2     0.00     0.00  std::fpos<__mbstate_t>::fpos(long)
-  0.00      3.86     0.00        1     0.00     0.00  _GLOBAL__sub_I_chunkId
-  0.00      3.86     0.00        1     0.00     0.00  __static_initialization_and_destruction_0(int, int)
+ time   seconds   seconds    calls  Ks/call  Ks/call  name    
+100.33   1784.78  1784.78        1     1.78     1.78  convolve(float*, int, float*, int, float*, int)
+  0.00   1784.80     0.02        2     0.00     0.00  wavReader(float*, char*, int*)
+  0.00   1784.82     0.02        1     0.00     0.00  scale(float*, int)
+  0.00   1784.82     0.00        3     0.00     0.00  std::operator|(std::_Ios_Openmode, std::_Ios_Openmode)
+  0.00   1784.82     0.00        2     0.00     0.00  std::fpos<__mbstate_t>::fpos(long)
+  0.00   1784.82     0.00        1     0.00     0.00  _GLOBAL__sub_I_chunkId
+  0.00   1784.82     0.00        1     0.00     0.00  __static_initialization_and_destruction_0(int, int)
+  0.00   1784.82     0.00        1     0.00     0.00  wavWriter(float*, int, char*)
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -50,52 +48,44 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 2 byte(s) for 0.26% of 3.86 seconds
+granularity: each sample hit covers 2 byte(s) for 0.00% of 1784.82 seconds
 
 index % time    self  children    called     name
                                                  <spontaneous>
-[1]    100.0    0.00    3.86                 main [1]
-                0.07    3.75       1/1           convolve(float*, int, float*, int, float*, int) [2]
-                0.02    0.00       1/1           scale(float*, int) [5]
-                0.01    0.00       2/2           wavReader(float*, char*, int*) [6]
-                0.01    0.00       1/1           wavWriter(float*, int, char*) [7]
+[1]    100.0    0.00 1784.82                 main [1]
+             1784.78    0.00       1/1           convolve(float*, int, float*, int, float*, int) [2]
+                0.02    0.00       2/2           wavReader(float*, char*, int*) [3]
+                0.02    0.00       1/1           scale(float*, int) [4]
+                0.00    0.00       1/1           wavWriter(float*, int, char*) [15]
 -----------------------------------------------
-                0.07    3.75       1/1           main [1]
-[2]     99.0    0.07    3.75       1         convolve(float*, int, float*, int, float*, int) [2]
-                3.73    0.00       3/3           four1(float*, int, int) [3]
-                0.02    0.00       1/1           four1Scale(float*, int) [4]
+             1784.78    0.00       1/1           main [1]
+[2]    100.0 1784.78    0.00       1         convolve(float*, int, float*, int, float*, int) [2]
 -----------------------------------------------
-                3.73    0.00       3/3           convolve(float*, int, float*, int, float*, int) [2]
-[3]     96.6    3.73    0.00       3         four1(float*, int, int) [3]
------------------------------------------------
-                0.02    0.00       1/1           convolve(float*, int, float*, int, float*, int) [2]
-[4]      0.5    0.02    0.00       1         four1Scale(float*, int) [4]
+                0.02    0.00       2/2           main [1]
+[3]      0.0    0.02    0.00       2         wavReader(float*, char*, int*) [3]
+                0.00    0.00       2/3           std::operator|(std::_Ios_Openmode, std::_Ios_Openmode) [11]
+                0.00    0.00       2/2           std::fpos<__mbstate_t>::fpos(long) [12]
 -----------------------------------------------
                 0.02    0.00       1/1           main [1]
-[5]      0.5    0.02    0.00       1         scale(float*, int) [5]
+[4]      0.0    0.02    0.00       1         scale(float*, int) [4]
 -----------------------------------------------
-                0.01    0.00       2/2           main [1]
-[6]      0.3    0.01    0.00       2         wavReader(float*, char*, int*) [6]
-                0.00    0.00       2/3           std::operator|(std::_Ios_Openmode, std::_Ios_Openmode) [14]
-                0.00    0.00       2/2           std::fpos<__mbstate_t>::fpos(long) [15]
+                0.00    0.00       1/3           wavWriter(float*, int, char*) [15]
+                0.00    0.00       2/3           wavReader(float*, char*, int*) [3]
+[11]     0.0    0.00    0.00       3         std::operator|(std::_Ios_Openmode, std::_Ios_Openmode) [11]
 -----------------------------------------------
-                0.01    0.00       1/1           main [1]
-[7]      0.3    0.01    0.00       1         wavWriter(float*, int, char*) [7]
-                0.00    0.00       1/3           std::operator|(std::_Ios_Openmode, std::_Ios_Openmode) [14]
+                0.00    0.00       2/2           wavReader(float*, char*, int*) [3]
+[12]     0.0    0.00    0.00       2         std::fpos<__mbstate_t>::fpos(long) [12]
 -----------------------------------------------
-                0.00    0.00       1/3           wavWriter(float*, int, char*) [7]
-                0.00    0.00       2/3           wavReader(float*, char*, int*) [6]
-[14]     0.0    0.00    0.00       3         std::operator|(std::_Ios_Openmode, std::_Ios_Openmode) [14]
+                0.00    0.00       1/1           __libc_csu_init [21]
+[13]     0.0    0.00    0.00       1         _GLOBAL__sub_I_chunkId [13]
+                0.00    0.00       1/1           __static_initialization_and_destruction_0(int, int) [14]
 -----------------------------------------------
-                0.00    0.00       2/2           wavReader(float*, char*, int*) [6]
-[15]     0.0    0.00    0.00       2         std::fpos<__mbstate_t>::fpos(long) [15]
+                0.00    0.00       1/1           _GLOBAL__sub_I_chunkId [13]
+[14]     0.0    0.00    0.00       1         __static_initialization_and_destruction_0(int, int) [14]
 -----------------------------------------------
-                0.00    0.00       1/1           __libc_csu_init [23]
-[16]     0.0    0.00    0.00       1         _GLOBAL__sub_I_chunkId [16]
-                0.00    0.00       1/1           __static_initialization_and_destruction_0(int, int) [17]
------------------------------------------------
-                0.00    0.00       1/1           _GLOBAL__sub_I_chunkId [16]
-[17]     0.0    0.00    0.00       1         __static_initialization_and_destruction_0(int, int) [17]
+                0.00    0.00       1/1           main [1]
+[15]     0.0    0.00    0.00       1         wavWriter(float*, int, char*) [15]
+                0.00    0.00       1/3           std::operator|(std::_Ios_Openmode, std::_Ios_Openmode) [11]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by
@@ -188,7 +178,6 @@ notice and this notice are preserved.
 
 Index by function name
 
-  [16] _GLOBAL__sub_I_chunkId  [5] scale(float*, int)     [15] std::fpos<__mbstate_t>::fpos(long)
-   [4] four1Scale(float*, int) [2] convolve(float*, int, float*, int, float*, int) [14] std::operator|(std::_Ios_Openmode, std::_Ios_Openmode)
-  [17] __static_initialization_and_destruction_0(int, int) [6] wavReader(float*, char*, int*)
-   [3] four1(float*, int, int) [7] wavWriter(float*, int, char*)
+  [13] _GLOBAL__sub_I_chunkId  [2] convolve(float*, int, float*, int, float*, int) [12] std::fpos<__mbstate_t>::fpos(long)
+  [14] __static_initialization_and_destruction_0(int, int) [3] wavReader(float*, char*, int*) [11] std::operator|(std::_Ios_Openmode, std::_Ios_Openmode)
+   [4] scale(float*, int)     [15] wavWriter(float*, int, char*)
