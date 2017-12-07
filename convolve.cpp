@@ -1,0 +1,209 @@
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <fstream>
+#include <iostream>
+
+using namespace std;
+
+char chunkId[4];
+int chunkSize;
+char wavFormat[2];
+
+char firstSubChunkId[4];
+int firstSubChunkSize;
+
+int16_t aFormat;
+int16_t channels;
+
+int sampleRate;
+int byteRate;
+int16_t blockAlignment;
+int16_t bitsPerSample;
+
+char secondSubChunkId[4];
+int secondSubChunkSize;
+short* fileData;
+
+int wavSize;
+
+
+float *wavReader(float *sig, char *inputFile);
+void wavWriter(float *outputSig, int sigSize, char *outputFile);
+void convolveSigs(float x[], int N, float h[], int M, float y[], int P);
+
+
+float* wavReader(float *sig, char *inputFile){
+	
+	//Load header values
+	ifstream inFile(inputFile, ios::in | ios::binary);
+	inFile.seekg(ios::beg);
+	inFile.read(chunkId, 4);
+	inFile.read((char*) &chunkSize, 4);
+	inFile.read(wavFormat, 4);
+	inFile.read(firstSubChunkId, 4);
+	inFile.read((char*) &firstSubChunkSize, 4);\
+	inFile.read((char*) &aFormat, 2);
+	inFile.read((char*) &channels, 2);
+	inFile.read((char*) &sampleRate, 4);
+	inFile.read((char*) &byteRate, 4);
+	inFile.read((char*) &blockAlignment, 2);
+	inFile.read((char*) &bitsPerSample, 2);
+	if (firstSubChunkSize == 18){	
+		char *trash = new char[2];
+		inFile.read(trash, 2);
+	}
+	inFile.read(secondSubChunkId, 4); 
+	inFile.read((char*)&secondSubChunkSize, 4);
+	
+	
+	//Load data 
+	wavSize = secondSubChunkSize/2;
+	short *wavData = new short[wavSize];
+	for (int i = 0; i < wavSize; i++){
+		inFile.read((char *) &wavData[i], 2);
+	}
+	inFile.close();
+	
+	short val;
+	sig = new float[wavSize];
+	for (int i = 0; i < wavSize; i++){
+		val = wavData[i];
+		signal[i] = (sample*1.0) / (pow(2.0, 15.0) -1);
+		if (signal[i] < -1.0){
+			signal[i] = -1.0;
+		}
+		
+	}
+	cout << "Input file loaded" << endl;
+	return sig;
+}
+
+
+void wavWriter(float *outputSig, int sigSize, char *outputFile){
+	int chunkSize = channels * sigSize * (bitsPerSamples / 8);
+	firstSubChunkSize = 16;
+	chunkId = "RIFF";
+	ofstream out(outputFile, ios::out| ios::binary);
+	format = "WAVE";
+	
+	
+	out.write(chunkId, 4);
+	out.write((char*) &chunkSize, 4);
+	out.write(wavFormat, 4);
+	out.write(firstSubChunkId, 4);
+	outFile.write((char*) &firstSubChunkSize, 4);
+	outFile.write((char*) &aFormat, 2);
+	outFile.write((char*) &channels, 2);
+	outFile.write((char*) &sampleRate, 4);
+	outFile.write((char*) &byteRate, 4);
+	outFile.write((char*) &blockAlignment, 2);
+	outFile.write((char*) &bitsPerSample, 2);
+	outFile.write(secondSubChunkId, 4);
+	outFile.write((char*)&secondSubChunkSize, 4);
+	
+	
+	int16_t sample;
+	for (int i = 0; i < sigSize; i++){
+		sample = (int16_t)(outputSig[i] * (pow(2.0, 15.0) - 1));
+		outFile.write((char)&sample, 2);
+	
+	}
+	
+	outFile.close();
+	
+	
+	
+}
+
+/*****************************************************************************
+*
+*    Function:     convolve
+*
+*    Description:  Convolves two signals, producing an output signal.
+*                  The convolution is done in the time domain using the
+*                  "Input Side Algorithm" (see Smith, p. 112-115).
+*
+*    Parameters:   x[] is the signal to be convolved
+*                  N is the number of samples in the vector x[]
+*                  h[] is the impulse response, which is convolved with x[]
+*                  M is the number of samples in the vector h[]
+*                  y[] is the output signal, the result of the convolution
+*                  P is the number of samples in the vector y[].  P must
+*                       equal N + M - 1
+*
+*	Source:			Leonard Manzara's convolution demo program
+*****************************************************************************/
+void convolve(float x[], int N, float h[], int M, float y[], int P)
+{
+	int n, m;
+	 
+	 /*  Make sure the output buffer is the right size: P = N + M - 1  */
+	if (P != (N + M - 1)) {
+		printf("Output signal vector is the wrong size\n");
+		printf("It is %-d, but should be %-d\n", P, (N + M - 1));
+		printf("Aborting convolution\n");
+		return;
+	}
+	
+	/*  Clear the output buffer y[] to all zero values  */  
+	for (n = 0; n < P; n++)
+		y[n] = 0.0;
+		
+	  /*  Do the convolution  */
+  /*  Outer loop:  process each input value x[n] in turn  */	
+	for (n = 0; n < N; n++) {
+		/*  Inner loop:  process x[n] with each sample of h[]  */
+		for (m = 0; m < M; m++)
+			y[n+m] += x[n] * h[m];
+	}
+}
+
+
+
+int main(int argc, char* args[]){
+	
+	if (argc != 4){
+		cout << "Usage: convolve.exe <input wav> <impulsve wav> <output wav>\n" << endl;
+		return 1;
+	}
+	
+	char *inputFileName 	= args[1];
+	char *irFileName 		= args[2];
+//	char *outputFileName	= args[3];
+	
+	
+	int inputSize;
+	int irSize;
+	
+	
+	cout << "Reading Input file\n" << endl;
+	float *inputFileSig = wavReader(inputFileSig, inputFileName);
+	inputSize = wavSize;
+	
+	
+	cout << "Reading IR file\n" << endl;
+	float *irFileSig = wavReader(irFileSig, irFileName);
+	irSize = wavSize;
+	
+	int outputSize = inputSize + irSize - 1;
+	float outputFileSig = new float[outputSize];
+	
+	cout << "Convolving data....\n" << endl;
+	
+	
+	convolve(inputFileSig, inputSize, irFileSig, irSize, outputFileSig, outputSize);
+	
+	
+	cout << "Convolution Complete\n" << endl;
+	cout << "Saving Output file\n" << endl;
+	
+	wavWriter(outputFileSig, outputSize, args[3];)
+	
+	cout << "Program Terminated\n" << endl;
+	
+	return 0;
+}
+
