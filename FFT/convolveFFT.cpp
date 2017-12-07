@@ -6,6 +6,9 @@
 #include <fstream>
 #include <iostream>
 #include <ctime>
+
+#define SWAP(a,b)  tempr=(a);(a)=(b);(b)=tempr
+
 using namespace std;
 
 char chunkId[4];
@@ -34,6 +37,8 @@ int wavSize;
 float *wavReader(float *sig, char *inputFile, int *inputSize);
 void wavWriter(float *outputSig, int sigSize, char *outputFile);
 void convolveSigs(float x[], int N, float h[], int M, float y[], int P);
+void four1(float data[], int nn, int isign);
+void four1Scale (float signal[], int N);
 void scale(float *outputSignal, int size);
 
 
@@ -107,6 +112,7 @@ void wavWriter(float *outputSig, int sigSize, char *outputFile){
 	out.write((char*) &blockAlignment, 2);
 	out.write((char*) &bitsPerSample, 2);
 	out.write(secondSubChunkId, 4);
+
 	out.write((char*)&wavSize, 4);
 	
 	
@@ -123,72 +129,145 @@ void wavWriter(float *outputSig, int sigSize, char *outputFile){
 	
 }
 
-/*****************************************************************************
-*
-*    Function:     convolve
-*
-*    Description:  Convolves two signals, producing an output signal.
-*                  The convolution is done in the time domain using the
-*                  "Input Side Algorithm" (see Smith, p. 112-115).
-*
-*    Parameters:   x[] is the signal to be convolved
-*                  N is the number of samples in the vector x[]
-*                  h[] is the impulse response, which is convolved with x[]
-*                  M is the number of samples in the vector h[]
-*                  y[] is the output signal, the result of the convolution
-*                  P is the number of samples in the vector y[].  P must
-*                       equal N + M - 1
-*
-*	Source:			Leonard Manzara's convolution demo program
-*****************************************************************************/
-void convolve(float x[], int N, float h[], int M, float y[], int P)
+// From notes in class
+void four1Scale (float signal[], int N)
 {
-	int n, m;
-	 /*  Make sure the output buffer is the right size: P = N + M - 1  */
-	if (P != (N + M - 1)) {
-		printf("Output signal vector is the wrong size\n");
-		printf("It is %-d, but should be %-d\n", P, (N + M - 1));
-		printf("Aborting convolution\n");
-		return;
+	int i;
+	int j;
+	for (i = 0, j = 0; i < N; i++, j+=2) {
+		signal[j] /= (float)N;
+		signal[j+1] /= (float)N;
+	}
+}
+
+
+
+
+//  The four1 FFT from Numerical Recipes in C,
+//  p. 507 - 508.
+//  Note:  changed float data types to double.
+//  nn must be a power of 2, and use +1 for
+//  isign for an FFT, and -1 for the Inverse FFT.
+//  The data is complex, so the array size must be
+//  nn*2. This code assumes the array starts
+//  at index 1, not 0, so subtract 1 when
+//  calling the routine (see main() below).
+//	Sourced from 501 course slides on d2l
+// 	I Changed the first parameter to float instead of double
+void four1(float data[], int nn, int isign)
+{
+    unsigned long n, mmax, m, j, istep, i;
+    double wtemp, wr, wpr, wpi, wi, theta;
+    double tempr, tempi;
+
+    n = nn << 1;
+    j = 1;
+
+    for (i = 1; i < n; i += 2) {
+	if (j > i) {
+	    SWAP(data[j], data[i]);
+	    SWAP(data[j+1], data[i+1]);
+	}
+	m = nn;
+	while (m >= 2 && j > m) {
+	    j -= m;
+	    m >>= 1;
+	}
+	j += m;
+    }
+
+    mmax = 2;
+    while (n > mmax) {
+	istep = mmax << 1;
+	theta = isign * (6.28318530717959 / mmax);
+	wtemp = sin(0.5 * theta);
+	wpr = -2.0 * wtemp * wtemp;
+	wpi = sin(theta);
+	wr = 1.0;
+	wi = 0.0;
+	for (m = 1; m < mmax; m += 2) {
+	    for (i = m; i <= n; i += istep) {
+		j = i + mmax;
+		tempr = wr * data[j] - wi * data[j+1];
+		tempi = wr * data[j+1] + wi * data[j];
+		data[j] = data[i] - tempr;
+		data[j+1] = data[i+1] - tempi;
+		data[i] += tempr;
+		data[i+1] += tempi;
+	    }
+	    wr = (wtemp = wr) * wpr - wi * wpi + wr;
+	    wi = wi * wpr + wtemp * wpi + wi;
+	}
+	mmax = istep;
+    }
+}
+
+
+
+
+void convolve(float x[], int N, float h[], int M, float y[], int P) 
+{
+	int i = 0;
+	int newArrSize = 1;
+	float *newInput = NULL;
+	float *newIR = NULL;
+	float *newOutput = NULL;
+	
+	//Keep doubling array size
+	while (newArrSize < P) {
+		newArrSize *= 2;
 	}
 	
-	/*  Clear the output buffer y[] to all zero values  */  
-	for (n = 0; n < P; n++)
-		y[n] = 0.0;
-		
-	  /*  Do the convolution  */
-  /*  Outer loop:  process each input value x[n] in turn  */	
-	for (n = 0; n < N; n++) {
-		/*  Inner loop:  process x[n] with each sample of h[]  */
-		for (m = 0; m < M; m++)
-			y[n+m] += x[n] * h[m];
+	
+	newInput = new float[2 * newArrSize];
+	for (i = 0; i < (N * 2); i+=2) {
+		newInput[i] = x[i/2];
+		newInput[i+1] = 0;
+	}
+	
+	while (i < newArrSize){
+		newInput[i] = 0;
+		i++;
+	}
+	
+	newIR = new float[2 * newArrSize];
+	for (i = 0; i < (M * 2); i+=2) {
+		newIR[i] = h[i/2];
+		newIR[i+1] = 0;
+	}
+	while (i < newArrSize){
+		newIR[i] = 0;
+		i++;
+	}
+	
+	newOutput = new float[2 * newArrSize];
+	for (i = 0; i < newArrSize; i++) {
+		newOutput[i] = 0;
+	}
+	four1((newIR - 1), newArrSize, 1);
+	four1((newInput - 1), newArrSize, 1);
+
+	// multiplying complex  numbers
+	for (i = 0; i < (newArrSize * 2); i+=2) {
+		newOutput[i] = (newInput[i] * newIR[i]) - (newInput[i+1] * newIR[i+1]);
+		newOutput[i+1] = (newInput[i+1] * newIR[i]) + (newInput[i] * newIR[i+1]);
+	}
+
+	// Inverse FFT
+	four1((newOutput - 1), newArrSize, -1);
+	
+	four1Scale(newOutput, newArrSize);
+	
+	for (i = 0; i < P; i++) {
+		y[i] = newOutput[i*2];
 	}
 }
 
-void scale(float *outputSignal, int size){
-	float minVal = 0, maxVal = 0;
- 	for(int i = 0; i < size; i++)
- 	{
- 		if(outputSignal[i] > maxVal)
-			maxVal = outputSignal[i];
-		if(outputSignal[i] < minVal)
-			minVal = outputSignal[i];
- 	}
- 
- 	minVal = minVal * -1;
- 	if(minVal > maxVal)
- 		maxVal = minVal;
- 	for(int i = 0; i < size; i++)
- 	{
- 		outputSignal[i] = outputSignal[i] / maxVal;
- 	}
-}
 
 int main(int argc, char* args[]){
-	//std::clock_t startTime;
 	std::clock_t startTime = std::clock();
 	if (argc != 4){
-		cout << "WRONG PARAMETERS: convolve.exe <input wav> <impulsve wav> <output wav>\n" << endl;
+		cout << "Usage: convolve.exe <input wav> <impulse wav> <output wav>\n" << endl;
 		return 1;
 	}
 	
@@ -216,11 +295,7 @@ int main(int argc, char* args[]){
 	convolve(inputFileSig, inputSize, irFileSig, irSize, outputFileSig, outputSize);
 	cout << "Convolution Complete\n" << endl;
 	
-	cout << "Scaling wav File\n" << endl;
-	
 	scale(outputFileSig, outputSize);
-	cout << "Saving Output file\n" << endl;
-	
 	wavWriter(outputFileSig, outputSize, args[3]);
 	
 	double timeElapsed = (std::clock() - startTime ) / (double) CLOCKS_PER_SEC;
@@ -229,4 +304,26 @@ int main(int argc, char* args[]){
 	
 	return 0;
 }
+
+
+void scale(float *outputSignal, int size){
+	float minVal = 0, maxVal = 0;
+ 	for(int i = 0; i < size; i++)
+ 	{
+ 		if(outputSignal[i] > maxVal)
+			maxVal = outputSignal[i];
+		if(outputSignal[i] < minVal)
+			minVal = outputSignal[i];
+ 	}
+ 
+ 	minVal = minVal * -1;
+ 	if(minVal > maxVal)
+ 		maxVal = minVal;
+ 	for(int i = 0; i < size; i++)
+ 	{
+ 		outputSignal[i] = outputSignal[i] / maxVal;
+ 	}
+}
+
+
 
