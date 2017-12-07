@@ -33,6 +33,8 @@ int wavSize;
 float *wavReader(float *sig, char *inputFile);
 void wavWriter(float *outputSig, int sigSize, char *outputFile);
 void convolveSigs(float x[], int N, float h[], int M, float y[], int P);
+void scale(float *outputSignal, int size);
+
 
 
 float* wavReader(float *sig, char *inputFile){
@@ -44,7 +46,7 @@ float* wavReader(float *sig, char *inputFile){
 	inFile.read((char*) &chunkSize, 4);
 	inFile.read(wavFormat, 4);
 	inFile.read(firstSubChunkId, 4);
-	inFile.read((char*) &firstSubChunkSize, 4);\
+	inFile.read((char*) &firstSubChunkSize, 4);
 	inFile.read((char*) &aFormat, 2);
 	inFile.read((char*) &channels, 2);
 	inFile.read((char*) &sampleRate, 4);
@@ -67,13 +69,13 @@ float* wavReader(float *sig, char *inputFile){
 	}
 	inFile.close();
 	
-	short val;
+	short sam;
 	sig = new float[wavSize];
 	for (int i = 0; i < wavSize; i++){
-		val = wavData[i];
-		signal[i] = (sample*1.0) / (pow(2.0, 15.0) -1);
-		if (signal[i] < -1.0){
-			signal[i] = -1.0;
+		sam = wavData[i];
+		sig[i] = (sam*1.0) / (pow(2.0, 15.0) -1);
+		if (sig[i] < -1.0){
+			sig[i] = -1.0;
 		}
 		
 	}
@@ -83,36 +85,36 @@ float* wavReader(float *sig, char *inputFile){
 
 
 void wavWriter(float *outputSig, int sigSize, char *outputFile){
-	int chunkSize = channels * sigSize * (bitsPerSamples / 8);
+	int chunkSize = channels * sigSize * (bitsPerSample / 8);
 	firstSubChunkSize = 16;
-	chunkId = "RIFF";
+	char *chunkId = "RIFF";
+	char *wavFormat = "WAVE";
 	ofstream out(outputFile, ios::out| ios::binary);
-	format = "WAVE";
 	
 	
 	out.write(chunkId, 4);
 	out.write((char*) &chunkSize, 4);
 	out.write(wavFormat, 4);
 	out.write(firstSubChunkId, 4);
-	outFile.write((char*) &firstSubChunkSize, 4);
-	outFile.write((char*) &aFormat, 2);
-	outFile.write((char*) &channels, 2);
-	outFile.write((char*) &sampleRate, 4);
-	outFile.write((char*) &byteRate, 4);
-	outFile.write((char*) &blockAlignment, 2);
-	outFile.write((char*) &bitsPerSample, 2);
-	outFile.write(secondSubChunkId, 4);
-	outFile.write((char*)&secondSubChunkSize, 4);
+	out.write((char*) &firstSubChunkSize, 4);
+	out.write((char*) &aFormat, 2);
+	out.write((char*) &channels, 2);
+	out.write((char*) &sampleRate, 4);
+	out.write((char*) &byteRate, 4);
+	out.write((char*) &blockAlignment, 2);
+	out.write((char*) &bitsPerSample, 2);
+	out.write(secondSubChunkId, 4);
+	out.write((char*)&secondSubChunkSize, 4);
 	
 	
 	int16_t sample;
 	for (int i = 0; i < sigSize; i++){
 		sample = (int16_t)(outputSig[i] * (pow(2.0, 15.0) - 1));
-		outFile.write((char)&sample, 2);
+		out.write((char*)&sample, 2);
 	
 	}
 	
-	outFile.close();
+	out.close();
 	
 	
 	
@@ -161,6 +163,27 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 	}
 }
 
+void scale(float *outputSignal, int size){
+	float minVal = 0, maxVal = 0;
+ 	for(int i = 0; i < size; i++)
+ 	{
+ 		if(outputSignal[i] > maxVal)
+			maxVal = outputSignal[i];
+		if(outputSignal[i] < minVal)
+			minVal = outputSignal[i];
+ 	}
+ 
+ 	minVal = minVal * -1;
+ 	if(minVal > maxVal)
+ 		maxVal = minVal;
+ 	for(int i = 0; i < size; i++)
+ 	{
+ 		outputSignal[i] = outputSignal[i] / maxVal;
+ 	}
+}
+
+
+
 
 
 int main(int argc, char* args[]){
@@ -189,18 +212,18 @@ int main(int argc, char* args[]){
 	irSize = wavSize;
 	
 	int outputSize = inputSize + irSize - 1;
-	float outputFileSig = new float[outputSize];
+	float *outputFileSig = new float[outputSize];
 	
 	cout << "Convolving data....\n" << endl;
-	
-	
 	convolve(inputFileSig, inputSize, irFileSig, irSize, outputFileSig, outputSize);
-	
-	
 	cout << "Convolution Complete\n" << endl;
+	
+	cout << "Scaling wav File\n" << endl;
+	
+	scale(outputFileSig, outputSize);
 	cout << "Saving Output file\n" << endl;
 	
-	wavWriter(outputFileSig, outputSize, args[3];)
+	wavWriter(outputFileSig, outputSize, args[3]);
 	
 	cout << "Program Terminated\n" << endl;
 	
