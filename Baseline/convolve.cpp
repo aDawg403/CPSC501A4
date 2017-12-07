@@ -27,17 +27,18 @@ char secondSubChunkId[4];
 int secondSubChunkSize;
 short* fileData;
 
+int sizeOfOutput;
 int wavSize;
 
 
-float *wavReader(float *sig, char *inputFile);
+float *wavReader(float *sig, char *inputFile, int *inputSize);
 void wavWriter(float *outputSig, int sigSize, char *outputFile);
 void convolveSigs(float x[], int N, float h[], int M, float y[], int P);
 void scale(float *outputSignal, int size);
 
 
 
-float* wavReader(float *sig, char *inputFile){
+float* wavReader(float *sig, char *inputFile, int *inputSize){
 	
 	//Load header values
 	ifstream inFile(inputFile, ios::in | ios::binary);
@@ -62,6 +63,7 @@ float* wavReader(float *sig, char *inputFile){
 	
 	
 	//Load data 
+	*inputSize = secondSubChunkSize/2;
 	wavSize = secondSubChunkSize/2;
 	short *wavData = new short[wavSize];
 	for (int i = 0; i < wavSize; i++){
@@ -76,8 +78,7 @@ float* wavReader(float *sig, char *inputFile){
 		sig[i] = (sam*1.0) / (pow(2.0, 15.0) -1);
 		if (sig[i] < -1.0){
 			sig[i] = -1.0;
-		}
-		
+		}		
 	}
 	cout << "Input file loaded" << endl;
 	return sig;
@@ -87,13 +88,16 @@ float* wavReader(float *sig, char *inputFile){
 void wavWriter(float *outputSig, int sigSize, char *outputFile){
 	int chunkSize = channels * sigSize * (bitsPerSample / 8);
 	firstSubChunkSize = 16;
+	wavSize = sigSize * 2;
+	
 	char *chunkId = "RIFF";
 	char *wavFormat = "WAVE";
 	ofstream out(outputFile, ios::out| ios::binary);
 	
-	
 	out.write(chunkId, 4);
+	cout << "test1" << endl;
 	out.write((char*) &chunkSize, 4);
+	chunkSize = chunkSize - 36;
 	out.write(wavFormat, 4);
 	out.write(firstSubChunkId, 4);
 	out.write((char*) &firstSubChunkSize, 4);
@@ -104,7 +108,8 @@ void wavWriter(float *outputSig, int sigSize, char *outputFile){
 	out.write((char*) &blockAlignment, 2);
 	out.write((char*) &bitsPerSample, 2);
 	out.write(secondSubChunkId, 4);
-	out.write((char*)&secondSubChunkSize, 4);
+	cout << "test2" << endl;
+	out.write((char*)&wavSize, 4);
 	
 	
 	int16_t sample;
@@ -141,7 +146,7 @@ void wavWriter(float *outputSig, int sigSize, char *outputFile){
 void convolve(float x[], int N, float h[], int M, float y[], int P)
 {
 	int n, m;
-	 
+	 cout << "START ALREADY" << endl;
 	 /*  Make sure the output buffer is the right size: P = N + M - 1  */
 	if (P != (N + M - 1)) {
 		printf("Output signal vector is the wrong size\n");
@@ -157,6 +162,7 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 	  /*  Do the convolution  */
   /*  Outer loop:  process each input value x[n] in turn  */	
 	for (n = 0; n < N; n++) {
+		cout << "Cycle " << n << " out of " << N << "\n" << endl;
 		/*  Inner loop:  process x[n] with each sample of h[]  */
 		for (m = 0; m < M; m++)
 			y[n+m] += x[n] * h[m];
@@ -187,11 +193,13 @@ void scale(float *outputSignal, int size){
 
 
 int main(int argc, char* args[]){
-	
+	//std::clock_t startTime;
+	//startTime = std::clock();
 	if (argc != 4){
 		cout << "Usage: convolve.exe <input wav> <impulsve wav> <output wav>\n" << endl;
 		return 1;
 	}
+	cout << "HELLO" << endl;
 	
 	char *inputFileName 	= args[1];
 	char *irFileName 		= args[2];
@@ -203,18 +211,19 @@ int main(int argc, char* args[]){
 	
 	
 	cout << "Reading Input file\n" << endl;
-	float *inputFileSig = wavReader(inputFileSig, inputFileName);
+	float *inputFileSig = wavReader(inputFileSig, inputFileName, &wavSize);
 	inputSize = wavSize;
-	
+	cout << "Input size " << inputSize << " \n" << endl;
 	
 	cout << "Reading IR file\n" << endl;
-	float *irFileSig = wavReader(irFileSig, irFileName);
+	float *irFileSig = wavReader(irFileSig, irFileName, &wavSize);
 	irSize = wavSize;
-	
+	cout << "IR SIZE " << irSize << " \n" << endl;
 	int outputSize = inputSize + irSize - 1;
 	float *outputFileSig = new float[outputSize];
 	
 	cout << "Convolving data....\n" << endl;
+	cout << "ALMOST START" << endl;
 	convolve(inputFileSig, inputSize, irFileSig, irSize, outputFileSig, outputSize);
 	cout << "Convolution Complete\n" << endl;
 	
@@ -225,7 +234,9 @@ int main(int argc, char* args[]){
 	
 	wavWriter(outputFileSig, outputSize, args[3]);
 	
-	cout << "Program Terminated\n" << endl;
+	//double timeElapsed = (clock() - startTime ) / (double) CLOCKS_PER_SEC;
+	
+	//cout << "Program Terminated with a run time of " << timeElapsed << "\n" << endl;
 	
 	return 0;
 }
