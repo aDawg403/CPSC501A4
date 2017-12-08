@@ -222,7 +222,7 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 	}
 	
 	
-	newInput = new float[2 * newArrSize];
+	newInput = new float[newArrSize + newArrSize];
 	for (i = 0; i < (N * 2); i+=2) {
 		newInput[i] = x[i/2];
 		newInput[i+1] = 0;
@@ -235,7 +235,7 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 	
 	
 	
-	newIR = new float[2 * newArrSize];
+	newIR = new float[newArrSize + newArrSize];
 	for (i = 0; i < (M * 2); i+=2) {
 		newIR[i] = h[i/2];
 		newIR[i+1] = 0;
@@ -246,7 +246,7 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 		i+=2;
 	}
 	
-	newOutput = new float[2 * newArrSize];
+	newOutput = new float[newArrSize + newArrSize];
 	for (i = 0; i < newArrSize; i+=2) {
 		newOutput[i] = 0;
 		newOutput[i+1] = 0;
